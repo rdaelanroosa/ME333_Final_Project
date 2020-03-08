@@ -106,24 +106,10 @@ iPI * icon_get_gains() {
     return &icon_gains;
 }
 
-int icon_set_PWM(float power) {
-    char buffer[50];
+void icon_set_PWM(float power) {
 
-    sprintf(buffer, "Power in: %f\n\r", power);
-    NU32_WriteUART3(buffer);
-
-    power = (power / 100.0); 
-
-    sprintf(buffer, "Power / 100: %f\n\r", power);
-    NU32_WriteUART3(buffer);
-
+    power = (power / 100.0) * TPWM;
     
-    power = power * TPWM;
-
-    sprintf(buffer, "Final power: %f\n\r", power);
-    NU32_WriteUART3(buffer);
-
-
     int ptickstemp = abs((int) (power));
 
     if (ptickstemp > TPWM) {

@@ -26,7 +26,7 @@ int encoder_ticks() {
 }
 
 float encoder_degrees() {
-    return ((encoder_command(1) - TARE) / PULSES) * DEGREES;
+    return ((encoder_ticks() - TARE) / PULSES) * DEGREES;
 }
 
 void encoder_reset() {

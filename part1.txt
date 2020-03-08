@@ -2,6 +2,21 @@ R Daelan Roosa
 
 PART 1
 
+<<<<<<< HEAD
+=======
+28.4.1
+
+    1) 
+        SPI4 channel, using NU32 pins B9, B14, F4 and F5
+    2)
+        ADC1 pin 0; NU32 pin B0
+    3) 
+        OC1 for PWM (pin D0) and PORTD pin 1 (D1) for direction control
+    4)
+        Timer2 (5 kHz ISR)
+        Timer4 (200 Hz ISR)
+
+>>>>>>> module_dev
 28.4.7
 
     2)
@@ -13,4 +28,12 @@ PART 1
 
         (R2 / R1) + 1 = ~ 29
 
+<<<<<<< HEAD
         IF R1 = 10k, R2 = series(22k, parallel(660k, 40k)), G = 29.6
+=======
+        IF R1 = 10k, R2 = series(22k, parallel(660k, 440k)) = 296k, G = 29.6
+
+    5)
+        R = 1k, C = 0.1 muF
+        fc = 1 / (2pi*10^-3)
+>>>>>>> module_dev

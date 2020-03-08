@@ -12,7 +12,7 @@ void icon_set_targ(int i);
 
 void icon_set_gains(float Kp, float Ki);
 
-int icon_set_PWM(float power);
+void icon_set_PWM(float power);
 
 void icon_set_ticks(int ticks);
 
