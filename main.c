@@ -5,19 +5,21 @@
 
 #define BUF_SIZE 200
 
-char buffer[BUF_SIZE];
-
 int main() {
+
+    char buffer[BUF_SIZE];
+    float Kp, Ki, Kd;
+    iPI * igainsp;
 
     mode_set(IDLE);
     encoder_init();
     icon_init();
     isense_init();
     
-    char buffer[BUF_SIZE];
+    
     
     NU32_Startup();
-    NU32_LED1 = 1;
+    NU32_LED1 = 0;
     NU32_LED2 = 1;
 
     __builtin_disable_interrupts();
@@ -29,7 +31,7 @@ int main() {
     while(1) {
         NU32_ReadUART3(buffer, BUF_SIZE);
         NU32_LED2 = 1;
-
+        NU32_LED1 = 1;
         switch (buffer[0]) {
 
             case 'a': {
@@ -70,6 +72,47 @@ int main() {
                 mode_set(PWM);
                 sprintf(buffer, "%f\n", setval);
                 NU32_WriteUART3(buffer);
+                break;
+            }
+
+            case 'g': {
+                NU32_ReadUART3(buffer, BUF_SIZE);
+                sscanf(buffer, "%f %f\n", &Kp, &Ki);
+                icon_set_gains(Kp, Ki);
+                igainsp = icon_get_gains();
+                sprintf(buffer, "%f %f\n", igainsp->Kp, igainsp->Ki);
+                NU32_WriteUART3(buffer);
+                break;
+            }
+
+            case 'h': {
+                igainsp = icon_get_gains();
+                sprintf(buffer, "%f %f\n", igainsp->Kp, igainsp->Ki);
+                NU32_WriteUART3(buffer);
+                break;
+            }
+
+            case 'i': {
+                iTestDatum * idatap;
+                iTestDatum ipoint;
+                int i = 0;
+                int endflag = 0;
+
+                mode_set(ITEST);
+                
+                while (mode_get() != IDLE) {
+                    ;
+                }
+                
+                idatap = icon_get_results();
+
+                while (!endflag) {
+                    ipoint = idatap[i];
+                    sprintf(buffer, "%d %d %f %f %f\r\n", ipoint.endflag, ipoint.index, ipoint.t, ipoint.i, ipoint.o);
+                    NU32_WriteUART3(buffer);
+                    endflag = ipoint.endflag;
+                    i++;
+                }
                 break;
             }
 
