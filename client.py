@@ -5,7 +5,6 @@ import serial
 PORT = '/dev/ttyUSB'
 
 menu = '''
-
 MENU:
 
     a: Read current (ticks)
@@ -172,9 +171,9 @@ switcher = {
     't':t,
     '?':help}
 
-portname = "%s%s" % (PORT, input('Port number: '))
+portname = "%s%s" % (PORT, input('\nPort number: '))
 ser = serial.Serial(portname,230400,rtscts=1)
-print('Opening port: ' + ser.name)
+print('\nOpening port: ' + ser.name)
 
 print(menu)
 
@@ -201,7 +200,3 @@ while (True):
             ref.append(data[2])
             u.append(data[3])  # Read in PI control output
             sampnum = sampnum + 1"""
-
-
-
-
