@@ -2,6 +2,7 @@ R Daelan Roosa
 
 PART 1
 
+<<<<<<< Updated upstream
 <<<<<<< HEAD
 =======
 28.4.1
@@ -17,6 +18,8 @@ PART 1
         Timer4 (200 Hz ISR)
 
 >>>>>>> module_dev
+=======
+>>>>>>> Stashed changes
 28.4.7
 
     2)
@@ -28,6 +31,7 @@ PART 1
 
         (R2 / R1) + 1 = ~ 29
 
+<<<<<<< Updated upstream
 <<<<<<< HEAD
         IF R1 = 10k, R2 = series(22k, parallel(660k, 40k)), G = 29.6
 =======
@@ -37,3 +41,6 @@ PART 1
         R = 1k, C = 0.1 muF
         fc = 1 / (2pi*10^-3)
 >>>>>>> module_dev
+=======
+        IF R1 = 10k, R2 = series(22k, parallel(660k, 40k)), G = 29.6
+>>>>>>> Stashed changes

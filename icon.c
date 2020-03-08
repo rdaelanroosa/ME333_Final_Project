@@ -37,7 +37,6 @@ void __ISR(_TIMER_2_VECTOR, IPL3SOFT) iController(void) {
         case PWM: {
             OC1RS = pticks;
             LATDbits.LATD1 = pdir;
-
             break;
         }
 
@@ -109,7 +108,7 @@ iPI * icon_get_gains() {
 void icon_set_PWM(float power) {
 
     power = (power / 100.0) * TPWM;
-    
+
     int ptickstemp = abs((int) (power));
 
     if (ptickstemp > TPWM) {
@@ -126,8 +125,6 @@ void icon_set_PWM(float power) {
     pticks = ptickstemp;
     pdir = pdirtemp;
     __builtin_enable_interrupts();
-
-    return ptickstemp;
 }
 
 void icon_set_ticks(int ticks) {

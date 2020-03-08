@@ -66,16 +66,9 @@ int main() {
                 NU32_ReadUART3(buffer, BUF_SIZE);
                 float setval;
                 sscanf(buffer, "%f\n", &setval);
-<<<<<<< HEAD
-                int newduty = icon_set_PWM(setval);
-                mode_set(PWM);
-                NU32_WriteUART3(buffer);
-                sprintf(buffer, "%d\n", newduty);
-=======
                 icon_set_PWM(setval);
                 mode_set(PWM);
                 sprintf(buffer, "%f\n", setval);
->>>>>>> module_dev
                 NU32_WriteUART3(buffer);
                 break;
             }

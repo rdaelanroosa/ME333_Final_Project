@@ -3,3 +3,11 @@
 
 # Ada Library Information
 *.ali
+
+*.dis
+
+out.hex
+
+*.hex
+
+*.map
