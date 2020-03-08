@@ -1,4 +1,5 @@
 #include "encoder.h"
+#include "utilities.h"
 #include <xc.h>
 
 #define PULSES 384.0
@@ -22,7 +23,12 @@ static int encoder_command(int read) {
 
 int encoder_ticks() {
     encoder_command(1);
-    return encoder_command(1);
+    int pos = encoder_command(1);
+    Mode mode = get_mode();
+    if (pos == 0) && ((mode == HOLD) || (mode == TRACK)) {
+        mode_set(IDLE);
+    }
+    return pos;
 }
 
 float encoder_degrees() {
