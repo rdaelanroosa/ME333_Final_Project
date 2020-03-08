@@ -12,6 +12,8 @@ void icon_set_targ(int i);
 
 void icon_set_gains(float Kp, float Ki);
 
+iPI * icon_get_gains();
+
 void icon_set_PWM(float power);
 
 void icon_set_ticks(int ticks);

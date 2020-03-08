@@ -69,10 +69,10 @@ def f():
 
 def g():
     ser.write(b'g\n')
-    kp = input('Current Kp: ')
-    ki = input('Current Ki: ')
+    kp = float(input('\nCurrent Kp: '))
+    ki = float(input('Current Ki: '))
     print('\nSending gains... ', end='')
-    ser.write(("%f %f" % (kp, ki)).encode())
+    ser.write(("%f %f\n" % (kp, ki)).encode())
     raw = ser.read_until(b'\n', 50)
     data = list(map(float,raw.split()))
     if data[0] == kp and data[1] == ki:

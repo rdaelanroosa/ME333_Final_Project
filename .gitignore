@@ -11,3 +11,5 @@ out.hex
 *.hex
 
 *.map
+
+*.elf
