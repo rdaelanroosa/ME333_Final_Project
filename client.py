@@ -48,11 +48,17 @@ def b():
 
 def c():
     ser.write(b'c\n')
-    print("\nENCODER TICKS: %d\n" % int(ser.read_until(b'\n', 50)))
+    ticks = int(ser.read_until(b'\n', 50))
+    print("\nENCODER TICKS: %d\n" % ticks)
+    if ticks == 0:
+        print("\n!!! ENCODER SATURATED !!!\n")
 
 def d():
     ser.write(b'd\n')
-    print("\nENCODER DEGREES: %f\n" % float(ser.read_until(b'\n', 50)))
+    deg = float(ser.read_until(b'\n', 50))
+    print("\nENCODER DEGREES: %f\n" % deg)
+    if deg == -30720.0:
+        print("\n!!! ENCODER SATURATED !!!\n")
 
 def e():
     ser.write(b'e\n')
@@ -84,8 +90,8 @@ def h():
     ser.write(b'h\n')
     raw = ser.read_until(b'\n', 50)
     data = raw.split()
-    print('\nCURRENT KP: %s' % (data[0]))
-    print('CURRENT KI: %s\n' % (data[1]))
+    print('\nCURRENT KP: %f' % float((data[0])))
+    print('CURRENT KI: %f\n' % float((data[1])))
 
 def i():
     True

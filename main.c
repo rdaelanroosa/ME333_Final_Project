@@ -19,7 +19,7 @@ int main() {
     
     
     NU32_Startup();
-    NU32_LED1 = 1;
+    NU32_LED1 = 0;
     NU32_LED2 = 1;
 
     __builtin_disable_interrupts();
@@ -31,7 +31,7 @@ int main() {
     while(1) {
         NU32_ReadUART3(buffer, BUF_SIZE);
         NU32_LED2 = 1;
-
+        NU32_LED1 = 1;
         switch (buffer[0]) {
 
             case 'a': {
@@ -76,10 +76,16 @@ int main() {
             }
 
             case 'g': {
-
                 NU32_ReadUART3(buffer, BUF_SIZE);
                 sscanf(buffer, "%f %f\n", &Kp, &Ki);
                 icon_set_gains(Kp, Ki);
+                igainsp = icon_get_gains();
+                sprintf(buffer, "%f %f\n", igainsp->Kp, igainsp->Ki);
+                NU32_WriteUART3(buffer);
+                break;
+            }
+
+            case 'h': {
                 igainsp = icon_get_gains();
                 sprintf(buffer, "%f %f\n", igainsp->Kp, igainsp->Ki);
                 NU32_WriteUART3(buffer);

@@ -55,6 +55,8 @@ void __ISR(_TIMER_2_VECTOR, IPL3SOFT) iController(void) {
 
 void icon_init() {
 
+    icon_set_gains(0, 0);
+
     //Config Timer2 to trigger interrupt @ 5kHz for PWM duty cycle update ISR
     T2CONbits.TCKPS = 0b110;  
     PR2 = 250;
