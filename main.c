@@ -92,6 +92,31 @@ int main() {
                 break;
             }
 
+            case 'i': {
+                iTestDatum * idatap;
+                iTestDatum ipoint;
+                int i = 0;
+                int endflag = 0;
+
+                mode_set(ITEST);
+                
+                while (mode_get() != IDLE) {
+                    ;
+                }
+                
+                idatap = icon_get_results();
+
+                while (!endflag) {
+                    ipoint = idatap[i];
+                    sprintf(buffer, "%d %d %f %f %f\r\n", ipoint.endflag, ipoint.index, ipoint.t, ipoint.i, ipoint.o);
+                    NU32_WriteUART3(buffer);
+                    endflag = ipoint.endflag;
+                    i++;
+                }
+
+                break;
+            }
+
             case 'p': {
                 mode_set(IDLE);
                 break;

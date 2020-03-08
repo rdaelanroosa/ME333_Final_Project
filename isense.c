@@ -2,6 +2,7 @@
 #include <xc.h>
 
 #define TICKSTOMA 6.77
+#define MATOTICKS 0.1477
 #define CENTER 508
 #define NAVG 100
 
@@ -29,4 +30,12 @@ float isense_mA() {
 int isense_ticks() {
     AD1CHSbits.CH0SA = 0;    //Assumes pin previously configured for analog input
     return ADC1BUF0;
+}
+
+float isense_ticks_mA(int ticks) {
+    return ((float) ticks) * TICKSTOMA;
+}
+
+int isense_mA_ticks(float mA) {
+    return ((int) (mA * MATOTICKS));
 }

@@ -1,6 +1,7 @@
 
 
 import serial
+import matplotlib.pyplot as plt 
 
 PORT = '/dev/ttyUSB'
 
@@ -94,10 +95,23 @@ def h():
     print('CURRENT KI: %f\n' % float((data[1])))
 
 def i():
-    True
+    h()
+    ser.write(b'i\n')
+    target = []
+    current = []
+    output = []
+    endflag = 0
+    i = 0
+    while not bool(endflag):
+        data_read = ser.read_until(b'\n',50)
+        data = str(data_read,'utf-8').split()
+        if len(data) == 5:
+            endflag = int(data[0])
+            target[i] = data[2]
+            current[i] = data[3]
+            output[i] = data[4]
 
 def j():
-    True
 
 def k():
     True
