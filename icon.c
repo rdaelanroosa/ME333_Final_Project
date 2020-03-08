@@ -7,13 +7,15 @@
 #define NPTSITEST 100
 #define ITESTH 200.0
 #define ITESTL -200.0
+#define KPBASE 15
+#define KIBASE 5
 
 #ifndef TICKSTOMA
 #define TICKSTOMA 6.77  
 #endif
 
 static volatile iPI icon_gains;
-static volatile int eint, eintmax, t, pticks, pdir;
+static volatile int eint, eintmax, t;
 static volatile float Waveform[NPTSITEST];
 volatile iTestDatum iTestData[NPTSITEST];
 char buffer[50];
@@ -22,14 +24,18 @@ static int get_PI(int n){
     int e = t - n;
     eint += e;
 
-    if (abs(eint) > eintmax) {
-        eint = eintmax * (abs(eint) / eint);
+    if (eint > eintmax) {
+        eint = eintmax;
+    } else if (eint < -eintmax) {
+        eint = -eintmax;
     }
 
     int u = (icon_gains.Kp) * e + (icon_gains.Ki * eint);
     
-    if (abs(u) > TPWM) {
-        u = TPWM * (abs(u) / u);
+    if (u > TPWM) {
+        u = TPWM;
+    } else if (u < -TPWM) {
+        u = -TPWM;
     }
 
     return u;
@@ -45,28 +51,22 @@ void __ISR(_TIMER_2_VECTOR, IPL3SOFT) iController(void) {
     switch (mode_get()) {
         
         case IDLE: {
-            OC1RS = 0;
+            icon_set_ticks(0);
             break;
         }
         
         case PWM: {
-            OC1RS = pticks;
-            LATDbits.LATD1 = pdir;
             break;
         }
 
         case HOLD: {
-            OC1RS = get_PI(i);
+            break;
         }
 
         case ITEST: {
-            sprintf(buffer, "\r\nNew targ (mA) %f\r\n", Waveform[ntest]);
-            NU32_WriteUART3(buffer);
-            sprintf(buffer, "\r\nNew targ (ticks) %d\r\n", isense_mA_ticks(Waveform[ntest]));
-            NU32_WriteUART3(buffer);
             icon_set_targ(isense_mA_ticks(Waveform[ntest]));
             int u = get_PI(i);
-            OC1RS = u;
+            icon_set_ticks(u);
             iTestData[ntest].t = Waveform[ntest];
             iTestData[ntest].i = m;
             iTestData[ntest].o = (((float) u) / TPWM) * 100;
@@ -94,7 +94,7 @@ void __ISR(_TIMER_2_VECTOR, IPL3SOFT) iController(void) {
 
 void icon_init() {
 
-    icon_set_gains(0, 0);
+    icon_set_gains(KPBASE, KIBASE);
 
     int i;
     for (i = 0; i < NPTSITEST; i++) {
@@ -149,6 +149,7 @@ void icon_set_gains(float Kp, float Ki) {
     icon_gains.Kp = Kp;
     icon_gains.Ki = Ki;
     eint = 0;
+    eintmax = TPWM / Ki;
     __builtin_enable_interrupts();
 }
 
@@ -157,40 +158,20 @@ iPI * icon_get_gains() {
 }
 
 void icon_set_PWM(float power) {
-
-    power = (power / 100.0) * TPWM;
-
-    int ptickstemp = abs((int) (power));
-
-    if (ptickstemp > TPWM) {
-        ptickstemp = TPWM;
-    }
-
-    if (ptickstemp < -TPWM) {
-        ptickstemp = -TPWM;
-    }
-
-    int pdirtemp = (power < 0);
-    
-    __builtin_disable_interrupts();
-    pticks = ptickstemp;
-    pdir = pdirtemp;
-    __builtin_enable_interrupts();
+    int tickpower = (power / 100.0) * TPWM;
+    icon_set_ticks(tickpower);
 }
 
 void icon_set_ticks(int ticks) {
-    int ptickstemp = abs(ticks);
-    if (ptickstemp > TPWM) {
-        ptickstemp = TPWM;
+    int pticks = abs(ticks);
+    if (pticks > TPWM) {
+        pticks = TPWM;
     }
 
-    int pdirtemp = (ticks < 0);
-    
-    __builtin_disable_interrupts();
-    pticks = ptickstemp;
-    pdir = pdirtemp;
-    __builtin_enable_interrupts();
+    int pdir = (ticks < 0);
 
+    OC1RS = pticks;
+    LATDbits.LATD1 = pdir;
 }
 
 iTestDatum * icon_get_results() {

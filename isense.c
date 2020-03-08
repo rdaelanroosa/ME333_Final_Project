@@ -33,9 +33,9 @@ int isense_ticks() {
 }
 
 float isense_ticks_mA(int ticks) {
-    return ((float) ticks) * TICKSTOMA;
+    return ((float) (ticks - CENTER)) * TICKSTOMA;
 }
 
 int isense_mA_ticks(float mA) {
-    return ((int) (mA * MATOTICKS));
+    return ((int) (mA * MATOTICKS)) + CENTER;
 }

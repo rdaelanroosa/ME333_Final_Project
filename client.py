@@ -28,7 +28,7 @@ MENU:
     q: Quit client
     r: Get mode
 
-    h: Help (display this menu)
+    ?: Help (display this menu)
 
 '''
 
@@ -107,11 +107,20 @@ def i():
         data = str(data_read,'utf-8').split()
         if len(data) == 5:
             endflag = int(data[0])
-            target[i] = data[2]
-            current[i] = data[3]
-            output[i] = data[4]
+            target.append(float(data[2]))
+            current.append(float(data[3]))
+            output.append(float(data[4]))
+    
+    print("\n\n<CLOSE PLOT TO CONTINUE>\r\n") # time array
+    plt.plot(target)
+    plt.plot(current)
+    plt.plot(output)
+    plt.ylabel('value')
+    plt.xlabel('sample')
+    plt.show()
 
 def j():
+    True
 
 def k():
     True
