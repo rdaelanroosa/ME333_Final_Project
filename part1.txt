@@ -2,9 +2,6 @@ R Daelan Roosa
 
 PART 1
 
-<<<<<<< Updated upstream
-<<<<<<< HEAD
-=======
 28.4.1
 
     1) 
@@ -17,9 +14,12 @@ PART 1
         Timer2 (5 kHz ISR)
         Timer4 (200 Hz ISR)
 
->>>>>>> module_dev
-=======
->>>>>>> Stashed changes
+        Both these timers are of comparable priority, however, if both flags are set we would want the position control ISR to run first.
+        Therefore the position control ISR will be set to 3.1, with the current control ISR set to 3.0.
+    
+    5, 6)
+        See attached images
+
 28.4.7
 
     2)
@@ -31,16 +31,19 @@ PART 1
 
         (R2 / R1) + 1 = ~ 29
 
-<<<<<<< Updated upstream
-<<<<<<< HEAD
-        IF R1 = 10k, R2 = series(22k, parallel(660k, 40k)), G = 29.6
-=======
         IF R1 = 10k, R2 = series(22k, parallel(660k, 440k)) = 296k, G = 29.6
 
     5)
         R = 1k, C = 0.1 muF
         fc = 1 / (2pi*10^-3)
->>>>>>> module_dev
-=======
-        IF R1 = 10k, R2 = series(22k, parallel(660k, 40k)), G = 29.6
->>>>>>> Stashed changes
+
+    6)
+        CURRENT | EXP VOLTAGE | VOLTAGE
+        1000 mA   2.094 V       1.998 V
+        500 mA    1.872 V       1.785 V
+        0 mA      1.650 V       1.648 V
+        -500 mA   1.428 V       1.435 V 
+        -1000 mA  1.206 V       1.219 V
+28.9.8
+
+    See Attached Images

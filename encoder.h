@@ -9,4 +9,6 @@ int encoder_ticks();
 
 float encoder_degrees();
 
+int encoder_deg_ticks(float degrees);
+
 #endif

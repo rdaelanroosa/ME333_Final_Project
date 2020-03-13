@@ -6,29 +6,33 @@
 #define TPCON 6250
 #define IMAX 1023
 #define IMIN 0 
-#define INTMAX 1024
+#define INTMAX 512
+#define ITARE 508
 
-static pPID pcon_gains;
-static int eint, eintmax, eprev, t, pticks, pdir;
+static pPID pcon_gains = {0, 0, 100};
+static int eint, eintmax, eprev, t, pticks, pdir, ediffprev;
+char buffer[50];
 
 static int get_PID() {
-
-    int e = t - encoder_ticks();
+    int n = encoder_ticks();
+    int e = t - n;
     eint += e;
     int edot = e - eprev;
+    eprev = e;
 
     if (abs(eint) > eintmax) {
         eint = eintmax * (abs(eint) / eint);
     }
 
-    int u = (pcon_gains.Kp * e) + (pcon_gains.Ki * eint) + (pcon_gains.Kd * edot);
+    int u = (pcon_gains.Kp * e) + (pcon_gains.Ki * eint) + (pcon_gains.Kd * edot) + ITARE;
 
     if (u > IMAX) {
         u = IMAX;
     } else if (u < IMIN) {
         u = IMIN;
     }
-
+    //sprintf(buffer, "%d %d %d %d %d\r\n", u, mode_get(), e, n, t);
+    //NU32_WriteUART3(buffer);
     return u;
     
 }
@@ -39,6 +43,10 @@ void __ISR(_TIMER_4_VECTOR, IPL3SOFT) pController(void) {
         case HOLD: {
             icon_set_targ(get_PID());
             break;
+        }
+
+        case TRACK: {
+            ;
         }
 
         default: {
@@ -58,7 +66,7 @@ void pcon_init() {
     PR4 = TPCON;
     TMR4 = 0;
     IPC4bits.T4IP = 3;
-    IPC4bits.T4IS = 0;
+    IPC4bits.T4IS = 1;
     IFS0bits.T4IF = 0;
     IEC0bits.T4IE = 1;
 
