@@ -1,4 +1,5 @@
 #include "encoder.h"
+#include "utilities.h"
 #include <xc.h>
 
 #define PULSES 384.0
@@ -18,11 +19,19 @@ static int encoder_command(int read) {
     return SPI4BUF;
 }
 
-    
+int encoder_deg_ticks(float degrees){
+    float convert = ((degrees / DEGREES) * PULSES);
+    int ticks = convert + TARE;
+    return ticks;
+}
 
 int encoder_ticks() {
     encoder_command(1);
-    return encoder_command(1);
+    int pos = encoder_command(1);
+    if (pos == 0) {
+        mode_set(IDLE);
+    }
+    return pos;
 }
 
 float encoder_degrees() {

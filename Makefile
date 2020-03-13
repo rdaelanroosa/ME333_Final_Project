@@ -1,7 +1,7 @@
 XC32PATH=/opt/microchip/xc32/v2.30/bin
 HARMONYPATH=
 NU32PATH=/home/daelan/PIC32
-PORT=/dev/ttyUSB1
+PORT=/dev/ttyUSB0
 TERMEMU=screen
 
 #This file is used to:

@@ -7,7 +7,7 @@
 #define NPTSITEST 100
 #define ITESTH 200.0
 #define ITESTL -200.0
-#define KPBASE 15
+#define KPBASE 19
 #define KIBASE 5
 
 #ifndef TICKSTOMA
@@ -60,6 +60,11 @@ void __ISR(_TIMER_2_VECTOR, IPL3SOFT) iController(void) {
         }
 
         case HOLD: {
+            ;
+        }
+
+        case TRACK: {
+            icon_set_ticks(get_PI(isense_ticks()));
             break;
         }
 

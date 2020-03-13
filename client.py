@@ -85,7 +85,7 @@ def g():
     if data[0] == kp and data[1] == ki:
         print("Done\n")
     else:
-        print("ERROR: CURRENT KP, CURRENT KI may have been written improperly.\n")
+        print("ERROR: CURRENT KP, CURRENT KI may have been written improperly. Read back to confirm\n")
 
 def h():
     ser.write(b'h\n')
@@ -95,8 +95,31 @@ def h():
     print('CURRENT KI: %f\n' % float((data[1])))
 
 def i():
-    h()
     ser.write(b'i\n')
+    kp = float(input('\nPosition Kp: '))
+    ki = float(input('Position Ki: '))
+    kd = float(input('Position Kd: '))
+    print('\nSending gains... ', end='')
+    ser.write(("%f %f %f\n" % (kp, ki, kd)).encode())
+    raw = ser.read_until(b'\n', 50)
+    data = list(map(float,raw.split()))
+    if data[0] == kp and data[1] == ki and data[2] == kd:
+        print("Done\n")
+    else:
+        print("ERROR: POSITION KP, POSITION KI, POSITION KD may have been written improperly. Read back to confirm.\n")
+
+
+def j():
+    ser.write(b'j\n')
+    raw = ser.read_until(b'\n', 50)
+    data = raw.split()
+    print('\nCURRENT KP: %f' % float((data[0])))
+    print('CURRENT KI: %f' % float((data[1])))
+    print('CURRENT KD: %f\n' % float((data[2])))
+
+def k():
+    h()
+    ser.write(b'k\n')
     target = []
     current = []
     output = []
@@ -119,14 +142,11 @@ def i():
     plt.xlabel('sample')
     plt.show()
 
-def j():
-    True
-
-def k():
-    True
-
 def l():
-    True
+    ntarg = input('Angle to HOLD (deg): ')
+    ser.write(b'l\n')
+    ser.write(('%s\n' % ntarg).encode())
+
 
 def m():
     True

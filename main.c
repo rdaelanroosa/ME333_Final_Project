@@ -1,6 +1,7 @@
 #include "NU32.h"
 #include "encoder.h"
 #include "icon.h"
+#include "pcon.h"
 #include "utilities.h"
 
 #define BUF_SIZE 200
@@ -8,13 +9,15 @@
 int main() {
 
     char buffer[BUF_SIZE];
-    float Kp, Ki, Kd;
+    float Kp, Ki, Kd, newtarg;
     iPI * igainsp;
+    pPID * pgainsp;
 
     mode_set(IDLE);
     encoder_init();
-    icon_init();
     isense_init();
+    icon_init();
+    pcon_init();
     
     
     
@@ -79,10 +82,6 @@ int main() {
                 NU32_ReadUART3(buffer, BUF_SIZE);
                 sscanf(buffer, "%f %f\n", &Kp, &Ki);
                 icon_set_gains(Kp, Ki);
-                igainsp = icon_get_gains();
-                sprintf(buffer, "%f %f\n", igainsp->Kp, igainsp->Ki);
-                NU32_WriteUART3(buffer);
-                break;
             }
 
             case 'h': {
@@ -93,6 +92,22 @@ int main() {
             }
 
             case 'i': {
+                NU32_ReadUART3(buffer, BUF_SIZE);
+                sscanf(buffer, "%f %f %f\n", &Kp, &Ki, &Kd);
+                pcon_set_gains(Kp, Ki, Kd);
+                pgainsp = pcon_get_gains();
+                sprintf(buffer, "%f %f\n", igainsp->Kp, igainsp->Ki);
+
+            }
+
+            case 'j': {
+                pgainsp = pcon_get_gains();
+                sprintf(buffer, "%f %f %f\n", pgainsp->Kp, pgainsp->Ki, pgainsp->Kd);
+                NU32_WriteUART3(buffer);
+                break;
+            }
+
+            case 'k': {
                 iTestDatum * idatap;
                 iTestDatum ipoint;
                 int i = 0;
@@ -113,6 +128,14 @@ int main() {
                     endflag = ipoint.endflag;
                     i++;
                 }
+                break;
+            }
+            
+            case 'l': {
+                NU32_ReadUART3(buffer, BUF_SIZE);
+                sscanf(buffer, "%f\n", &newtarg);
+                pcon_set_targ(encoder_deg_ticks(newtarg));
+                mode_set(HOLD);
                 break;
             }
 
