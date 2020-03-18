@@ -3,6 +3,7 @@
 
 #include <xc.h>
 
+//define project constants
 
 // Macros from pcon.c
 #define TPCON 6250

@@ -23,19 +23,8 @@ void isense_init(){
 
 }
 
-float isense_mA() {
-    return (isense_ticks() - CENTER) * TICKSTOMA;
-}
-
+// returns current
 int isense_ticks() {
     AD1CHSbits.CH0SA = 0;    //Assumes pin previously configured for analog input
     return ADC1BUF0;
-}
-
-float isense_ticks_mA(int ticks) {
-    return ((float) (ticks - CENTER)) * TICKSTOMA;
-}
-
-int isense_mA_ticks(float mA) {
-    return ((int) (mA * MATOTICKS)) + CENTER;
 }

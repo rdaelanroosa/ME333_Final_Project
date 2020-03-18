@@ -14,59 +14,67 @@ int main() {
     iPI * igainsp;
     pPID * pgainsp;
 
-    util_mode_set(IDLE);
-    encoder_init();
-    isense_init();
-    icon_init();
-    pcon_init();
     
     
     
+    //Startup, set status lights to indicate reboot (for debugging segfaults and other runtime errors)
     NU32_Startup();
     NU32_LED1 = 0;
     NU32_LED2 = 1;
 
     __builtin_disable_interrupts();
 
-    // Config Peripherals
+    //Init modules
+    util_mode_set(IDLE);
+    encoder_init();
+    isense_init();
+    icon_init();
+    pcon_init();
 
     __builtin_enable_interrupts();
 
     while(1) {
-        NU32_ReadUART3(buffer, BUF_SIZE);
-        NU32_LED2 = 1;
+        NU32_ReadUART3(buffer, BUF_SIZE);  //read menu item
+        NU32_LED2 = 1;  // Clear status lights
         NU32_LED1 = 1;
+
         switch (buffer[0]) {
 
+            // read current in ticks
             case 'a': {
                 sprintf(buffer, "%d\n", isense_ticks());
                 NU32_WriteUART3(buffer);
                 break;
             }
 
+            //read current in mA
             case 'b': {
                 sprintf(buffer, "%f\n", cnvtt_isense_ma(isense_ticks()));
                 NU32_WriteUART3(buffer);
                 break;
             }
 
+            // read position in ticks
             case 'c': {
                 sprintf(buffer, "%d\n", encoder_get());
                 NU32_WriteUART3(buffer);
                 break;
             }
             
+            //read position in degrees
             case 'd': {
                 sprintf(buffer, "%f\n", cnvtt_encoder_deg(encoder_get())); 
                 NU32_WriteUART3(buffer);
                 break;
             }
-
+            
+            //reset encoder
             case 'e': {
                 encoder_reset();
                 break;
             }
-
+            
+            //set pwm duty cycle
             case 'f': {
                 NU32_ReadUART3(buffer, BUF_SIZE);
                 float setval;
@@ -78,19 +86,22 @@ int main() {
                 break;
             }
 
+            // Set current gains
             case 'g': {
                 NU32_ReadUART3(buffer, BUF_SIZE);
                 sscanf(buffer, "%f %f\n", &Kp, &Ki);
                 icon_set_gains(Kp, Ki);
             }
 
+            // read current gains
             case 'h': {
                 igainsp = icon_get_gains();
                 sprintf(buffer, "%f %f\n", igainsp->Kp, igainsp->Ki);
                 NU32_WriteUART3(buffer);
                 break;
             }
-
+            
+            // set position gains
             case 'i': {
                 NU32_ReadUART3(buffer, BUF_SIZE);
                 sscanf(buffer, "%f %f %f\n", &Kp, &Ki, &Kd);
@@ -100,6 +111,7 @@ int main() {
 
             }
 
+            // read position gains
             case 'j': {
                 pgainsp = pcon_get_gains();
                 sprintf(buffer, "%f %f %f\n", pgainsp->Kp, pgainsp->Ki, pgainsp->Kd);
@@ -107,6 +119,7 @@ int main() {
                 break;
             }
 
+            // run current gain test
             case 'k': {
                 DataPoint * idatap;
                 int i = 0;
@@ -123,6 +136,7 @@ int main() {
                 break;
             }
             
+            // hold bar at angle
             case 'l': {
                 NU32_ReadUART3(buffer, BUF_SIZE);
                 sscanf(buffer, "%f\n", &newtarg);
@@ -131,10 +145,9 @@ int main() {
                 break;
             }
 
-            case 'm': {
-                
-            }
 
+            // read trajectory (falls through intentionally to next case)
+            case 'm': {;}
             case 'n': {
                 int numentries;
                 int * traj;
@@ -158,20 +171,24 @@ int main() {
                 
             }
             
+            //execute trajectory
             case 'o': {
                 encoder_reset();
-                
+
+
                 util_mode_set(TRACK);
                 while (util_mode_get() == TRACK) {;}
                 util_return_data(pcon_get_results());
                 break;
             }
 
+            //disable motor
             case 'p': {
                 util_mode_set(IDLE);
                 break;
             }
 
+            //disable motor and confirm
             case 'q': {
                 util_mode_set(IDLE);
                 sprintf(buffer, "%d\r\n", util_mode_get());
@@ -179,24 +196,14 @@ int main() {
                 break;
             }
 
+            //get mode
             case 'r': {
                 sprintf(buffer, "%d\r\n", util_mode_get());
                 NU32_WriteUART3(buffer);
                 break;
             }
-
-            case 't': {
-                NU32_ReadUART3(buffer, BUF_SIZE);
-                //float setval = strtof(buffer, &buffer);
-                int setval;
-                sscanf(buffer, "%d", &setval);
-                icon_set(setval);
-                util_mode_set(PWM);
-                sprintf(buffer, "%d\n", setval);
-                NU32_WriteUART3(buffer);
-                break;
-            }
-
+            
+            // Set status light to indicate unrecognized command
             default: {
                 NU32_LED2 = 0; //ERROR
                 break;

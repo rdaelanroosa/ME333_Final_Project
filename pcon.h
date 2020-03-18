@@ -1,6 +1,7 @@
 #ifndef PCON_H
 #include "util.h"
 
+// PID gains struct
 typedef struct {
     float Kp; 
     float Ki;

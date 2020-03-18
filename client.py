@@ -44,14 +44,17 @@ mode_dict = {
     3:"HOLD", 
     4:"TRACK"}
 
+# get current (ticks)
 def a():
     ser.write(b'a\n')
     print("\nISENSE TICKS: %d\n" % int(ser.read_until(b'\n', 50)))
 
+# get current (mA)
 def b():
     ser.write(b'b\n')
     print("\nISENSE mA: %f\n" % float(ser.read_until(b'\n', 50)))
 
+# get encoder (ticks)
 def c():
     ser.write(b'c\n')
     ticks = int(ser.read_until(b'\n', 50))
@@ -59,6 +62,7 @@ def c():
     if ticks == 0:
         print("\n!!! ENCODER SATURATED !!!\n")
 
+#get encoder (degrees)
 def d():
     ser.write(b'd\n')
     deg = float(ser.read_until(b'\n', 50))
@@ -66,9 +70,11 @@ def d():
     if deg == -30720.0:
         print("\n!!! ENCODER SATURATED !!!\n")
 
+#reset encoder
 def e():
     ser.write(b'e\n')
 
+#set motor voltage by pwm percent
 def f():
     pwm = input('\n PWM: ')
     ser.write(b'f\n')
@@ -78,7 +84,7 @@ def f():
         print("\nERROR: PWM MAY NOT BE SET PROPERLY")
     print("")
 
-
+# set current gains
 def g():
     ser.write(b'g\n')
     kp = float(input('\nCurrent Kp: '))
@@ -92,6 +98,7 @@ def g():
     else:
         print("ERROR: CURRENT KP, CURRENT KI may have been written improperly. Read back to confirm\n")
 
+#get current gains
 def h():
     ser.write(b'h\n')
     raw = ser.read_until(b'\n', 50)
@@ -99,6 +106,7 @@ def h():
     print('\nCURRENT KP: %f' % float((data[0])))
     print('CURRENT KI: %f\n' % float((data[1])))
 
+#set position gains
 def i():
     ser.write(b'i\n')
     kp = float(input('\nPosition Kp: '))
@@ -113,15 +121,16 @@ def i():
     else:
         print("ERROR: POSITION KP, POSITION KI, POSITION KD may have been written improperly. Read back to confirm.\n")
 
-
+#get position gains
 def j():
     ser.write(b'j\n')
     raw = ser.read_until(b'\n', 50)
     data = raw.split()
-    print('\nCURRENT KP: %f' % float((data[0])))
-    print('CURRENT KI: %f' % float((data[1])))
-    print('CURRENT KD: %f\n' % float((data[2])))
+    print('\nPOSITION KP: %f' % float((data[0])))
+    print('POSITION KI: %f' % float((data[1])))
+    print('POSITION KD: %f\n' % float((data[2])))
 
+#run test of current gains
 def k():
     h()
     ser.write(b'k\n')
@@ -147,12 +156,13 @@ def k():
     plt.xlabel('sample')
     plt.show()
 
+#hold arm at given position
 def l():
     ntarg = input('Angle to HOLD (deg): ')
     ser.write(b'l\n')
     ser.write(('%s\n' % ntarg).encode())
 
-
+# load step trajectory
 def m():
     
     trajectory = genRef('step')
@@ -172,6 +182,7 @@ def m():
 
     print("Done\n")
 
+#load cubic trajectory
 def n():
 
     trajectory = genRef('cubic')
@@ -189,6 +200,7 @@ def n():
         ser.write(('%f\n' % i).encode())
         print(ser.read_until(b'\n',50))
 
+#execute trajectory
 def o():
     target = []
     position = []
@@ -213,10 +225,11 @@ def o():
     plt.xlabel('sample')
     plt.show()
 
-
+#unpower motor
 def p():
     ser.write(b'p\n')
 
+#set PIC to IDLE and quit
 def q():
     print("\nSetting MODE to IDLE...", end = '')
     ser.write(b'q\n')
@@ -237,18 +250,14 @@ def q():
         print('Exiting...\n\n')
         exit()
 
+#get mode
 def r():
     ser.write(b'r\n')
     raw = ser.read_until(b'\n', 50)
     data = int(str(raw, 'utf-8'))
     print('MODE: ' + mode_dict[data])
 
-def t():
-    pwm = input('\n PWM: ')
-    ser.write(b'f\n')
-    ser.write(('%s\n' % pwm).encode())
-    raw = ser.read_until(b'\n', 50)
-
+#pritnt menu
 def help():
     print(menu)
 
@@ -256,6 +265,7 @@ def err():
     print('\nInvalid choice\n')
     switcher.get(input('(h for help) >>> '), err)()
 
+#switch implementation
 switcher = {
     'a':a,
     'b':b,
@@ -278,36 +288,19 @@ switcher = {
     't':t,
     '?':help}
 
+#initialize serial port
 portname = "%s%s" % (PORT, input('Port number: '))
 ser = serial.Serial(portname,230400,rtscts=1)
 print('Opening port: ' + ser.name)
 
 print(menu)
 
+#loop through menu prompt forever
 while (True):
    
     choice = input('>>> ')
 
     switcher.get(choice, err)()
-    #ser.write(ks.encode()) # Send Kp, Ki
-
-    """sampnum = 0
-    read_samples = 10
-    ADCval = []
-    ref = []
-    u = []        # List to store control output from PI controller
-    while read_samples > 1:
-        data_read = ser.read_until(b'\n',50)
-        data_text = str(data_read,'utf-8')
-        data = list(map(int,data_text.split()))
-        print(data) # for debugging
-        if(len(data)==4):
-            read_samples = data[0]
-            ADCval.append(data[1])
-            ref.append(data[2])
-            u.append(data[3])  # Read in PI control output
-            sampnum = sampnum + 1"""
-
 
 
 

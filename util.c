@@ -1,15 +1,17 @@
 #include "util.h"
 
 static Mode PICMode = IDLE;
-
+// return operating mode
 Mode util_mode_get() {
     return PICMode;
 }
 
+//set operating mode
 void util_mode_set(Mode newMode) {
     PICMode = newMode;
 }
 
+// send test results to client
 void util_return_data(DataPoint * results) {
     char buffer[50];
     int endflag = 0;
@@ -21,6 +23,9 @@ void util_return_data(DataPoint * results) {
         i++;
     }
 }
+
+
+// functions for unit conversion
 
 float cnvtt_encoder_deg(int ticks) {
     return (((float) (ticks - TARE)) / PULSES) * DEGREES;

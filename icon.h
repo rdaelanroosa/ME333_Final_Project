@@ -3,6 +3,7 @@
 
 #include "util.h"
 
+// PI gains struct
 typedef struct {
     float Kp; 
     float Ki; 

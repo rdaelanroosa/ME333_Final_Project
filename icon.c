@@ -9,11 +9,12 @@ static volatile float Waveform[NPTSITEST];
 volatile DataPoint iTestData[NPTSITEST];
 char buffer[50];
 
+// PI controller for current
 static int get_PI(int n){
     int e = t - n;
     eint += e;
     
-
+    //antiwindup
     if (eint > eintmax) {
         eint = eintmax;
     } else if (eint < -eintmax) {
@@ -22,6 +23,7 @@ static int get_PI(int n){
 
     int u = (icon_gains.Kp) * e + (icon_gains.Ki * eint);
     
+    // clamp output
     if (u > TPWM) {
         u = TPWM;
     } else if (u < -TPWM) {
@@ -32,6 +34,7 @@ static int get_PI(int n){
 
 }
 
+// current control interrupt
 void __ISR(_TIMER_2_VECTOR, IPL3SOFT) iController(void) {
     static int ntest = 0;
     int i = isense_ticks();
@@ -40,24 +43,31 @@ void __ISR(_TIMER_2_VECTOR, IPL3SOFT) iController(void) {
 
     switch (util_mode_get()) {
         
+        //disable motor
         case IDLE: {
+            //brake motor
             icon_set(0);
             break;
         }
-
+        
+        // do nothing; OC1RS is set by pwm command
         case PWM: {
             break;
         }
 
         case ITEST: {
+            //track Waveform
             icon_set_targ(cnvtt_isense_ticks(Waveform[ntest]));
             u = get_PI(i);
             icon_set(u);
+
+            //record data
             iTestData[ntest].target = Waveform[ntest];
             iTestData[ntest].value = cnvtt_isense_ma(i);
             iTestData[ntest].effort = cnvtt_icon_pwm(u);
             iTestData[ntest].index = ntest;
             
+            // end test at end of Waveform, return to IDLE
             ntest++;
             if (ntest == NPTSITEST) {
                 iTestData[ntest-1].endflag = 1;
@@ -69,6 +79,7 @@ void __ISR(_TIMER_2_VECTOR, IPL3SOFT) iController(void) {
             break;
         }
 
+        // track target set by pcon
         default: {
             icon_set( get_PI(i));
             break;
@@ -83,6 +94,7 @@ void icon_init() {
 
     icon_set_gains(KPBASE, KIBASE);
 
+    // init waveform
     int i;
     for (i = 0; i < NPTSITEST; i++) {
         if ((i < (NPTSITEST / 4)) | ((i >= (NPTSITEST / 2)) & (i < ((3*NPTSITEST)/4)))) {
@@ -122,6 +134,7 @@ void icon_init() {
 
 }
 
+// set curret target
 void icon_set_targ(int i) {
 
     __builtin_disable_interrupts();
@@ -130,6 +143,7 @@ void icon_set_targ(int i) {
 
 }
 
+// set PI gains
 void icon_set_gains(float Kp, float Ki) {
 
     __builtin_disable_interrupts();
@@ -140,10 +154,12 @@ void icon_set_gains(float Kp, float Ki) {
     __builtin_enable_interrupts();
 }
 
+// return PI gains
 iPI * icon_get_gains() {
     return &icon_gains;
 }
 
+//set motor output
 void icon_set(int ticks) {
     int pticks = abs(ticks);
     if (pticks > TPWM) {
@@ -156,6 +172,7 @@ void icon_set(int ticks) {
     LATDbits.LATD1 = pdir;
 }
 
+//return itest results
 DataPoint * icon_get_results() {
     return iTestData;
 }
