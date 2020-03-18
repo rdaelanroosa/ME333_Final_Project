@@ -191,10 +191,56 @@ def m():
                 index = index + 1
         trajectory.append(val_points[index])
 
-    if len(trajectory) > PIC_MAX_STORE
+    if len(trajectory) > PIC_MAX_STORE:
         print('Trajectory is too long. It will be truncated to %d entries.' % PIC_MAX_STORE)
-        trajectory = trajectory[0; PIC_MAX_STORE]
+        trajectory = trajectory[0: PIC_MAX_STORE]
 
+
+    trajectory = []
+
+    time_points = []
+    val_points = []
+
+    raw_points = (input("Input time/position points as '$time1 $val1, $time2 $val2, ...': ")).split(', ')
+    for i in raw_points:
+        point = i.split()
+        time_points.append(float(point[0]))
+        val_points.append(float(point[1]))
+        
+
+    if (len(time_points) != len(val_points)) or len(time_points) == 0:
+        print("ERROR: Improper input!")
+        return 0
+
+
+    for i in range(len(time_points)):
+        if i > 0:
+            if time_points[i] <= time_points[i-1]:
+                print("ERROR: Time values must be ascending and greater than zero!")
+                return 0
+
+    if time_points[0] != 0:
+        time_points.insert(0, 0)
+        val_points.insert(0, 0)
+
+    print(time_points)
+    print(val_points)
+    
+    index = 0
+    for i in range(0, int((time_points[-1] * MOTOR_SERVO_RATE) + 201)):
+        if index != len(time_points)-1 :
+            if i > time_points[index + 1] * MOTOR_SERVO_RATE:
+                index = index + 1
+        trajectory.append(val_points[index])
+
+    if len(trajectory) > PIC_MAX_STORE:
+        print('Trajectory is too long. It will be truncated to %d entries.' % PIC_MAX_STORE)
+        trajectory = trajectory[0:PIC_MAX_STORE]
+
+    print("Sending... ", end="")
+
+    for i in trajectory:
+        ser.write(('%f\n' % i))
 
 def n():
     True

@@ -1,24 +1,12 @@
 #include "icon.h"
 #include "isense.h"
 #include "NU32.h"
-#include "utilities.h"
-
-#define TPWM 3999.0
-#define NPTSITEST 100
-#define ITESTH 200.0
-#define ITESTL -200.0
-#define KPBASE 19
-#define KIBASE 5
-
-#ifndef TICKSTOMA
-#define TICKSTOMA 6.77  
-#endif
+#include "util.h"
 
 static volatile iPI icon_gains;
 static volatile int eint, eintmax, t;
 static volatile float Waveform[NPTSITEST];
-volatile iTestDatum iTestData[NPTSITEST];
-char buffer[50];
+volatile DataPoint iTestData[NPTSITEST];
 
 static int get_PI(int n){
     int e = t - n;
@@ -45,43 +33,33 @@ static int get_PI(int n){
 void __ISR(_TIMER_2_VECTOR, IPL3SOFT) iController(void) {
     static int ntest = 0;
     int i = isense_ticks();
-    float m = isense_mA();
     int u;
 
-    switch (mode_get()) {
+    switch (util_mode_get()) {
         
         case IDLE: {
-            icon_set_ticks(0);
+            icon_set(0);
             break;
         }
-        
+
         case PWM: {
-            break;
-        }
-
-        case HOLD: {
-            ;
-        }
-
-        case TRACK: {
-            icon_set_ticks(get_PI(isense_ticks()));
             break;
         }
 
         case ITEST: {
             icon_set_targ(isense_mA_ticks(Waveform[ntest]));
-            int u = get_PI(i);
-            icon_set_ticks(u);
-            iTestData[ntest].t = Waveform[ntest];
-            iTestData[ntest].i = m;
-            iTestData[ntest].o = (((float) u) / TPWM) * 100;
+            u = get_PI(i);
+            icon_set(u);
+            iTestData[ntest].target = Waveform[ntest];
+            iTestData[ntest].value = cnvtt_isense_ma(i);
+            iTestData[ntest].effort = cnvtt_icon_pwm(u);
             iTestData[ntest].index = ntest;
             
             ntest++;
             if (ntest == NPTSITEST) {
                 iTestData[ntest-1].endflag = 1;
                 ntest = 0;
-                mode_set(IDLE);
+                util_mode_set(IDLE);
             } else {
                 iTestData[ntest-1].endflag = 0;
             }
@@ -89,6 +67,7 @@ void __ISR(_TIMER_2_VECTOR, IPL3SOFT) iController(void) {
         }
 
         default: {
+            icon_set(get_PI(isense_ticks()));
             break;
         }
     }
@@ -162,12 +141,7 @@ iPI * icon_get_gains() {
     return &icon_gains;
 }
 
-void icon_set_PWM(float power) {
-    int tickpower = (power / 100.0) * TPWM;
-    icon_set_ticks(tickpower);
-}
-
-void icon_set_ticks(int ticks) {
+void icon_set(int ticks) {
     int pticks = abs(ticks);
     if (pticks > TPWM) {
         pticks = TPWM;
@@ -179,6 +153,6 @@ void icon_set_ticks(int ticks) {
     LATDbits.LATD1 = pdir;
 }
 
-iTestDatum * icon_get_results() {
+DataPoint * icon_get_results() {
     return iTestData;
 }

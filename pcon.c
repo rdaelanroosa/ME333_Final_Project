@@ -1,20 +1,16 @@
 #include "pcon.h"
-#include "utilities.h"
+#include "util.h"
 #include "encoder.h"
 #include "NU32.h"
-
-#define TPCON 6250
-#define IMAX 1023
-#define IMIN 0 
-#define INTMAX 512
-#define ITARE 508
 
 static pPID pcon_gains = {0, 0, 100};
 static int eint, eintmax, eprev, t, pticks, pdir, ediffprev;
 char buffer[50];
+volatile int trajectory[MAXTRAJ];
+volatile int trajlen;
+volatile DataPoint pTestData[MAXTRAJ];
 
-static int get_PID() {
-    int n = encoder_ticks();
+static int get_PID(int n) {
     int e = t - n;
     eint += e;
     int edot = e - eprev;
@@ -31,21 +27,48 @@ static int get_PID() {
     } else if (u < IMIN) {
         u = IMIN;
     }
-    //sprintf(buffer, "%d %d %d %d %d\r\n", u, mode_get(), e, n, t);
-    //NU32_WriteUART3(buffer);
+
     return u;
     
 }
 
 void __ISR(_TIMER_4_VECTOR, IPL3SOFT) pController(void) {
-    switch (mode_get()) {
-        
+    
+    static int ntest = 0;
+    static int pprev = 0;
+    int p = encoder_get();
+    int u;
+
+    switch (util_mode_get()) {
+    
         case HOLD: {
-            icon_set_targ(get_PID());
+            u = get_PID(p);
             break;
         }
 
         case TRACK: {
+            pcon_set_targ(trajectory[ntest]);
+            u = get_PID(p);
+            icon_set_targ(u);
+
+            pTestData[ntest].target = cnvtt_encoder_deg(trajectory[ntest]);
+            pTestData[ntest].value = cnvtt_encoder_deg(p);
+            pTestData[ntest].effort = cnvtt_isense_ma(u);
+
+
+            ntest++;
+            if (ntest == trajlen) {
+                pTestData[ntest-1].endflag = 1;
+                ntest = 0;
+                util_mode_set(IDLE);
+            } else {
+                pTestData[ntest-1].endflag = 0;
+            }
+            
+            break;
+        }
+
+        case SPEED: {
             ;
         }
 
@@ -99,3 +122,13 @@ void pcon_set_targ(int pos) {
     t = pos;
     __builtin_enable_interrupts();
 }
+
+int * pcon_get_traj(int numentries) {
+    trajlen = numentries;
+    return trajectory;
+}
+
+DataPoint * pcon_get_results() {
+    return pTestData;
+}
+    
