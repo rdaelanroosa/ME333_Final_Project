@@ -3,7 +3,7 @@
 #include "encoder.h"
 #include "NU32.h"
 
-static pPID pcon_gains = {0, 0, 100};
+static pPID pcon_gains = {30, 0, 500};
 static int eint, eintmax, eprev, t, pticks, pdir, ediffprev;
 char buffer[50];
 volatile int trajectory[MAXTRAJ];
@@ -27,7 +27,7 @@ static int get_PID(int n) {
     } else if (u < IMIN) {
         u = IMIN;
     }
-
+    
     return u;
     
 }
@@ -42,7 +42,8 @@ void __ISR(_TIMER_4_VECTOR, IPL3SOFT) pController(void) {
     switch (util_mode_get()) {
     
         case HOLD: {
-            u = get_PID(p);
+            icon_set_targ(get_PID(p));
+
             break;
         }
 

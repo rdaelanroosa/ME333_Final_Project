@@ -1,5 +1,6 @@
 #include "encoder.h"
 #include "util.h"
+#include "NU32.h"
 #include <xc.h>
 
 char buffer[100];
@@ -19,6 +20,7 @@ int encoder_get() {
     int pos = encoder_command(1);
     Mode mode = util_mode_get();
     if ((pos == 0) && ((mode == HOLD) || (mode == TRACK))) { 
+        NU32_WriteUART3("ENCODER THROWING TO IDLE \r\n");
         util_mode_set(IDLE);
     }
     return pos;

@@ -139,25 +139,31 @@ int main() {
                 int numentries;
                 int * traj;
                 float temp;
-                encoder_reset();
                 util_mode_set(IDLE);
                 NU32_ReadUART3(buffer, BUF_SIZE);
                 sscanf(buffer, "%d\n", &numentries);
                 traj = pcon_get_traj(numentries);
                 int i = 0;
+
                 while (i < numentries) {
                     NU32_ReadUART3(buffer, BUF_SIZE);
                     sscanf(buffer, "%f\n", &temp);
+                    sprintf(buffer, "%d %f\r\n", cnvtt_encoder_ticks(temp), cnvtt_encoder_deg(cnvtt_encoder_ticks(temp)));
+                    NU32_WriteUART3(buffer);
                     traj[i] = cnvtt_encoder_ticks(temp);
+                    i++;
                 }
-                i = 0;
-                util_mode_set(TRACK);
-                while (util_mode_get() == TRACK) {;}
-                util_return_data(pcon_get_results());
+
                 break;
+                
             }
             
             case 'o': {
+                encoder_reset();
+                
+                util_mode_set(TRACK);
+                while (util_mode_get() == TRACK) {;}
+                util_return_data(pcon_get_results());
                 break;
             }
 

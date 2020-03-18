@@ -7,10 +7,12 @@ static volatile iPI icon_gains;
 static volatile int eint, eintmax, t;
 static volatile float Waveform[NPTSITEST];
 volatile DataPoint iTestData[NPTSITEST];
+char buffer[50];
 
 static int get_PI(int n){
     int e = t - n;
     eint += e;
+    
 
     if (eint > eintmax) {
         eint = eintmax;
@@ -34,6 +36,7 @@ void __ISR(_TIMER_2_VECTOR, IPL3SOFT) iController(void) {
     static int ntest = 0;
     int i = isense_ticks();
     int u;
+    static int foo = 0;
 
     switch (util_mode_get()) {
         
@@ -47,7 +50,7 @@ void __ISR(_TIMER_2_VECTOR, IPL3SOFT) iController(void) {
         }
 
         case ITEST: {
-            icon_set_targ(isense_mA_ticks(Waveform[ntest]));
+            icon_set_targ(cnvtt_isense_ticks(Waveform[ntest]));
             u = get_PI(i);
             icon_set(u);
             iTestData[ntest].target = Waveform[ntest];
@@ -67,7 +70,7 @@ void __ISR(_TIMER_2_VECTOR, IPL3SOFT) iController(void) {
         }
 
         default: {
-            icon_set(get_PI(isense_ticks()));
+            icon_set( get_PI(i));
             break;
         }
     }
