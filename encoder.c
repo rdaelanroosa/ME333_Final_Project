@@ -1,11 +1,7 @@
 #include "encoder.h"
-#include "utilities.h"
+#include "util.h"
+#include "NU32.h"
 #include <xc.h>
-
-#define PULSES 384.0
-#define TARE 32768
-#define DEGREES 360.0
-#define RADIANS 6.283
 
 char buffer[100];
 
@@ -19,23 +15,15 @@ static int encoder_command(int read) {
     return SPI4BUF;
 }
 
-int encoder_deg_ticks(float degrees){
-    float convert = ((degrees / DEGREES) * PULSES);
-    int ticks = convert + TARE;
-    return ticks;
-}
-
-int encoder_ticks() {
+int encoder_get() {
     encoder_command(1);
     int pos = encoder_command(1);
-    if (pos == 0) {
-        mode_set(IDLE);
+    Mode mode = util_mode_get();
+    if ((pos == 0) && ((mode == HOLD) || (mode == TRACK))) { 
+        NU32_WriteUART3("ENCODER THROWING TO IDLE \r\n");
+        util_mode_set(IDLE);
     }
     return pos;
-}
-
-float encoder_degrees() {
-    return ((encoder_ticks(1) - TARE) / PULSES) * DEGREES;
 }
 
 void encoder_reset() {

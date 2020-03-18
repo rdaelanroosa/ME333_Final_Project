@@ -2,8 +2,13 @@
 
 import serial
 import matplotlib.pyplot as plt 
+from genref import genRef
 
 PORT = '/dev/ttyUSB'
+
+MOTOR_SERVO_RATE = 200.0
+PIC_MAX_STORE = 2000
+
 
 menu = '''
 
@@ -135,9 +140,9 @@ def k():
             output.append(float(data[4]))
     
     print("\n\n<CLOSE PLOT TO CONTINUE>\r\n") # time array
+    plt.plot(output)
     plt.plot(target)
     plt.plot(current)
-    plt.plot(output)
     plt.ylabel('value')
     plt.xlabel('sample')
     plt.show()
@@ -149,13 +154,65 @@ def l():
 
 
 def m():
-    True
+    
+    trajectory = genRef('step')
+
+    if len(trajectory) > PIC_MAX_STORE:
+        print('Trajectory is too long. It will be truncated to %d entries.' % PIC_MAX_STORE)
+        trajectory = trajectory[0:PIC_MAX_STORE]
+
+    print("Done!")
+    print("Sending... ", end='')
+
+    ser.write(b'm\n')
+    ser.write(('%d\n' % len(trajectory)).encode())
+    for i in trajectory:
+        ser.write(('%f\n' % i).encode())
+        print(ser.read_until(b'\n',50))
+
+    print("Done\n")
 
 def n():
-    True
+
+    trajectory = genRef('cubic')
+
+    if len(trajectory) > PIC_MAX_STORE:
+        print('Trajectory is too long. It will be truncated to %d entries.' % PIC_MAX_STORE)
+        trajectory = trajectory[0:PIC_MAX_STORE]
+
+    print("Done!")
+    print("Sending... ", end='')
+
+    ser.write(b'm\n')
+    ser.write(('%d\n' % len(trajectory)).encode())
+    for i in trajectory:
+        ser.write(('%f\n' % i).encode())
+        print(ser.read_until(b'\n',50))
 
 def o():
-    True
+    target = []
+    position = []
+    output = []
+    endflag = 0
+    i = 0
+    ser.write(b'o\n')
+    while not bool(endflag):
+        data_read = ser.read_until(b'\n',50)
+        data = str(data_read,'utf-8').split()
+        if len(data) == 5:
+            endflag = int(data[0])
+            target.append(float(data[2]))
+            position.append(float(data[3]))
+            output.append(float(data[4]))
+
+    print("\n\n<CLOSE PLOT TO CONTINUE>\r\n") 
+    #plt.plot(output)
+    plt.plot(target)
+    plt.plot(position)
+    plt.ylabel('value')
+    plt.xlabel('sample')
+    plt.show()
+
 
 def p():
     ser.write(b'p\n')

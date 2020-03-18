@@ -1,8 +1,9 @@
 #include "NU32.h"
+#include <stdio.h>
 #include "encoder.h"
 #include "icon.h"
 #include "pcon.h"
-#include "utilities.h"
+#include "util.h"
 
 #define BUF_SIZE 200
 
@@ -13,7 +14,7 @@ int main() {
     iPI * igainsp;
     pPID * pgainsp;
 
-    mode_set(IDLE);
+    util_mode_set(IDLE);
     encoder_init();
     isense_init();
     icon_init();
@@ -44,20 +45,19 @@ int main() {
             }
 
             case 'b': {
-                sprintf(buffer, "%f\n", isense_mA());
+                sprintf(buffer, "%f\n", cnvtt_isense_ma(isense_ticks()));
                 NU32_WriteUART3(buffer);
-            
                 break;
             }
 
             case 'c': {
-                sprintf(buffer, "%d\n", encoder_ticks());
+                sprintf(buffer, "%d\n", encoder_get());
                 NU32_WriteUART3(buffer);
                 break;
             }
             
             case 'd': {
-                sprintf(buffer, "%f\n", encoder_degrees()); 
+                sprintf(buffer, "%f\n", cnvtt_encoder_deg(encoder_get())); 
                 NU32_WriteUART3(buffer);
                 break;
             }
@@ -71,8 +71,8 @@ int main() {
                 NU32_ReadUART3(buffer, BUF_SIZE);
                 float setval;
                 sscanf(buffer, "%f\n", &setval);
-                icon_set_PWM(setval);
-                mode_set(PWM);
+                icon_set(cnvtt_icon_ticks(setval));
+                util_mode_set(PWM);
                 sprintf(buffer, "%f\n", setval);
                 NU32_WriteUART3(buffer);
                 break;
@@ -108,51 +108,79 @@ int main() {
             }
 
             case 'k': {
-                iTestDatum * idatap;
-                iTestDatum ipoint;
+                DataPoint * idatap;
                 int i = 0;
                 int endflag = 0;
 
-                mode_set(ITEST);
+                util_mode_set(ITEST);
                 
-                while (mode_get() != IDLE) {
+                while (util_mode_get() != IDLE) {
                     ;
                 }
-                
-                idatap = icon_get_results();
 
-                while (!endflag) {
-                    ipoint = idatap[i];
-                    sprintf(buffer, "%d %d %f %f %f\r\n", ipoint.endflag, ipoint.index, ipoint.t, ipoint.i, ipoint.o);
-                    NU32_WriteUART3(buffer);
-                    endflag = ipoint.endflag;
-                    i++;
-                }
+                util_return_data(icon_get_results());
+
                 break;
             }
             
             case 'l': {
                 NU32_ReadUART3(buffer, BUF_SIZE);
                 sscanf(buffer, "%f\n", &newtarg);
-                pcon_set_targ(encoder_deg_ticks(newtarg));
-                mode_set(HOLD);
+                pcon_set_targ(cnvtt_encoder_ticks(newtarg));
+                util_mode_set(HOLD);
+                break;
+            }
+
+            case 'm': {
+                
+            }
+
+            case 'n': {
+                int numentries;
+                int * traj;
+                float temp;
+                util_mode_set(IDLE);
+                NU32_ReadUART3(buffer, BUF_SIZE);
+                sscanf(buffer, "%d\n", &numentries);
+                traj = pcon_get_traj(numentries);
+                int i = 0;
+
+                while (i < numentries) {
+                    NU32_ReadUART3(buffer, BUF_SIZE);
+                    sscanf(buffer, "%f\n", &temp);
+                    sprintf(buffer, "%d %f\r\n", cnvtt_encoder_ticks(temp), cnvtt_encoder_deg(cnvtt_encoder_ticks(temp)));
+                    NU32_WriteUART3(buffer);
+                    traj[i] = cnvtt_encoder_ticks(temp);
+                    i++;
+                }
+
+                break;
+                
+            }
+            
+            case 'o': {
+                encoder_reset();
+                
+                util_mode_set(TRACK);
+                while (util_mode_get() == TRACK) {;}
+                util_return_data(pcon_get_results());
                 break;
             }
 
             case 'p': {
-                mode_set(IDLE);
+                util_mode_set(IDLE);
                 break;
             }
 
             case 'q': {
-                mode_set(IDLE);
-                sprintf(buffer, "%d\r\n", mode_get());
+                util_mode_set(IDLE);
+                sprintf(buffer, "%d\r\n", util_mode_get());
                 NU32_WriteUART3(buffer);
                 break;
             }
 
             case 'r': {
-                sprintf(buffer, "%d\r\n", mode_get());
+                sprintf(buffer, "%d\r\n", util_mode_get());
                 NU32_WriteUART3(buffer);
                 break;
             }
@@ -162,8 +190,8 @@ int main() {
                 //float setval = strtof(buffer, &buffer);
                 int setval;
                 sscanf(buffer, "%d", &setval);
-                icon_set_ticks(setval);
-                mode_set(PWM);
+                icon_set(setval);
+                util_mode_set(PWM);
                 sprintf(buffer, "%d\n", setval);
                 NU32_WriteUART3(buffer);
                 break;
