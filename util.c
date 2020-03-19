@@ -27,26 +27,34 @@ void util_return_data(DataPoint * results) {
 
 // functions for unit conversion
 
-float cnvtt_encoder_deg(int ticks) {
-    return (((float) (ticks - TARE)) / PULSES) * DEGREES;
+float cnvtt_pos_deg(int ticks) {
+    return ((float) (ticks - PCENTER)) * TICKSTODEG;
 }
 
-int cnvtt_encoder_ticks(float degrees) {
-    return ((((float) degrees) / DEGREES) * PULSES) + TARE;
+int cnvtt_pos_ticks(float degrees) {
+    return ((int) (degrees * DEGTOTICKS)) + PCENTER;
 }
 
 float cnvtt_isense_ma(int ticks) {
-    return (ticks - CENTER) * TICKSTOMA;
+    return ((float) (ticks - ICENTER)) * TICKSTOMA;
 }
 
 int cnvtt_isense_ticks(float mA) {
-    return (mA / TICKSTOMA) + CENTER;
+    return ((int) (mA * MATOTICKS)) + ICENTER;
 }
 
 float cnvtt_icon_pwm(int ticks) {
-    return (((float) ticks) / TPWM) * 100.0;
+    return ((float) ticks) * TICKSTOPWM;
 }
 
 int cnvtt_icon_ticks(float pwm) {
-    return (pwm / 100.0) * TPWM;
+    return ((int) (pwm * PWMTOTICKS));
+}
+
+float cnvtt_vel_rpm(int ticks) {
+    return ((float) ticks) * TICKSTORPM;
+}
+
+int cnvtt_vel_ticks(float rpm) {
+    return ((int) (rpm * RPMTOTICKS));
 }

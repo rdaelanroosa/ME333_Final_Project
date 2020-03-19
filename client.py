@@ -257,7 +257,7 @@ def r():
     data = int(str(raw, 'utf-8'))
     print('MODE: ' + mode_dict[data])
 
-#pritnt menu
+#print menu
 def help():
     print(menu)
 
@@ -285,7 +285,7 @@ switcher = {
     'p':p,
     'q':q,
     'r':r,
-    't':t,
+    #'t':t,
     '?':help}
 
 #initialize serial port

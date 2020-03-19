@@ -13,3 +13,5 @@ out.hex
 *.map
 
 *.elf
+
+__pycache__/

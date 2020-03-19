@@ -1,46 +1,54 @@
 #include "pcon.h"
 #include "util.h"
+#include "pid.h"
 #include "encoder.h"
 #include "NU32.h"
 
-static pPID pcon_gains = {30, 0, 500};
-static int eint, eintmax, eprev, t, pticks, pdir, ediffprev;
-char buffer[50];
+static PIDObj pos_pid = {
+    PCENTER,
+    PMAX,
+    PMIN,
+    0,
+    0,
+    0,
+    0,
+    ICENTER,
+    IMAX,
+    IMIN,
+    PKPBASE,
+    PKIBASE,
+    PKDBASE
+};
+
+static PIDObj vel_pi = {
+    0,
+    VMAX,
+    VMIN,
+    0,
+    0,
+    (IMAX - ICENTER) / VKIBASE,
+    (IMIN - ICENTER) / VKIBASE,
+    ICENTER,
+    IMAX,
+    IMIN,
+    VKPBASE,
+    VKIBASE,
+    0
+};
+
 volatile int trajectory[MAXTRAJ];
 volatile int trajlen;
+static volatile int vel, pos;
 volatile DataPoint pTestData[MAXTRAJ];
 
-//Calculate output from PID algorithm
-static int get_PID(int n) {
-    int e = t - n;
-    eint += e;
-    int edot = e - eprev;
-    eprev = e;
-
-    //anti-windup
-    if (abs(eint) > eintmax) {
-        eint = eintmax * (abs(eint) / eint);
-    }
-
-    int u = (pcon_gains.Kp * e) + (pcon_gains.Ki * eint) + (pcon_gains.Kd * edot) + ITARE;
-
-    //clamp output
-    if (u > IMAX) {
-        u = IMAX;
-    } else if (u < IMIN) {
-        u = IMIN;
-    }
-    
-    return u;
-    
-}
 
 // position control interrupt
 void __ISR(_TIMER_4_VECTOR, IPL3SOFT) pController(void) {
     
     static int ntest = 0;
-    static int pprev = 0;
-    int p = encoder_get();
+    static int posprev = 0;
+    pos = encoder_get();
+    vel = pos - posprev;
     int u;
 
     switch (util_mode_get()) {
@@ -48,20 +56,20 @@ void __ISR(_TIMER_4_VECTOR, IPL3SOFT) pController(void) {
         case HOLD: {
             
             // in hold mode pass PID output to current PI control
-            icon_set_targ(get_PID(p));
+            icon_set_targ(pid_get(&pos_pid, pos));
 
             break;
         }
 
         case TRACK: {
             // Track trajectory with PID
-            pcon_set_targ(trajectory[ntest]);
-            u = get_PID(p);
+            pcon_set_pos_targ(trajectory[ntest]);
+            u = pid_get(&pos_pid, pos);
             icon_set_targ(u);
 
             //record data
-            pTestData[ntest].target = cnvtt_encoder_deg(trajectory[ntest]);
-            pTestData[ntest].value = cnvtt_encoder_deg(p);
+            pTestData[ntest].target = cnvtt_pos_deg(trajectory[ntest]);
+            pTestData[ntest].value = cnvtt_pos_deg(pos);
             pTestData[ntest].effort = cnvtt_isense_ma(u);
 
             //reset and go to IDLE at the end of the trajectory
@@ -79,7 +87,7 @@ void __ISR(_TIMER_4_VECTOR, IPL3SOFT) pController(void) {
 
         // not yet implemented
         case SPEED: {
-            ;
+            icon_set_targ(pid_get(&vel_pi, vel));
         }
 
         // do nothing in IDLE, PWM, ITEST
@@ -89,6 +97,7 @@ void __ISR(_TIMER_4_VECTOR, IPL3SOFT) pController(void) {
     }
 
     // Clear interrupt flag
+    posprev = pos;
     IFS0bits.T4IF = 0;
 }
 
@@ -108,33 +117,34 @@ void pcon_init() {
 }
 
 // Set PID gains
-void pcon_set_gains(float Kp, float Ki, float Kd) {
-    int eintmaxtemp = INTMAX / Ki;
-
-    __builtin_disable_interrupts();
-    pcon_gains.Kp = Kp;
-    pcon_gains.Ki= Ki;
-    pcon_gains.Kd = Kd;
-    eintmax = eintmaxtemp;
-    __builtin_enable_interrupts();
+void pcon_set_pos_gains(float Kp, float Ki, float Kd) {
+    pid_set_coeffs(&pos_pid, Kp, Ki, Kd);
 }
 
 //return pointer to PID gains
-pPID * pcon_get_gains() {
-    return &pcon_gains;
+Gains pcon_get_pos_gains() {
+    Gains gains = pid_get_gains(&pos_pid);
+    return gains;
 }
 
 // set target for PID
-void pcon_set_targ(int pos) {
-    
-    if (pos > 65535) {
-        pos = 65535;
-    } else if (pos < 0) {
-        pos = 0;
-    }
-    __builtin_disable_interrupts();
-    t = pos;
-    __builtin_enable_interrupts();
+void pcon_set_pos_targ(int pos) {
+  pid_set_targ(&pos_pid, pos);
+}
+
+void pcon_set_vel_gains(float Kp, float Ki) {
+    pid_set_coeffs(&vel_pi, Kp, Ki, 0);
+}
+
+//return array of PID gains
+Gains pcon_get_vel_gains() {
+    Gains gains = pid_get_gains(&vel_pi);
+    return gains;
+}
+
+// set target for PID
+void pcon_set_vel_targ(int vel) {
+  pid_set_targ(&vel_pi, vel);
 }
 
 //return trajectory array
