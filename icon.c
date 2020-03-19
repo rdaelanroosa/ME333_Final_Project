@@ -2,44 +2,32 @@
 #include "isense.h"
 #include "NU32.h"
 #include "util.h"
+#include "pid.h"
 
-static volatile iPI icon_gains;
-static volatile int eint, eintmax, t;
+static volatile PIDObj current_pi = {
+    ICENTER,
+    IMAX,
+    IMIN,
+    0,
+    0,
+    TPWM / IKIBASE,
+    -TPWM / IKIBASE,
+    0,
+    TPWM,
+    -TPWM,
+    IKPBASE,
+    IKIBASE,
+    0
+};
+
 static volatile float Waveform[NPTSITEST];
 volatile DataPoint iTestData[NPTSITEST];
-char buffer[50];
-
-// PI controller for current
-static int get_PI(int n){
-    int e = t - n;
-    eint += e;
-    
-    //antiwindup
-    if (eint > eintmax) {
-        eint = eintmax;
-    } else if (eint < -eintmax) {
-        eint = -eintmax;
-    }
-
-    int u = (icon_gains.Kp) * e + (icon_gains.Ki * eint);
-    
-    // clamp output
-    if (u > TPWM) {
-        u = TPWM;
-    } else if (u < -TPWM) {
-        u = -TPWM;
-    }
-
-    return u;
-
-}
 
 // current control interrupt
 void __ISR(_TIMER_2_VECTOR, IPL3SOFT) iController(void) {
     static int ntest = 0;
     int i = isense_ticks();
     int u;
-    static int foo = 0;
 
     switch (util_mode_get()) {
         
@@ -58,7 +46,7 @@ void __ISR(_TIMER_2_VECTOR, IPL3SOFT) iController(void) {
         case ITEST: {
             //track Waveform
             icon_set_targ(cnvtt_isense_ticks(Waveform[ntest]));
-            u = get_PI(i);
+            u = pid_get(&current_pi, i);
             icon_set(u);
 
             //record data
@@ -81,7 +69,7 @@ void __ISR(_TIMER_2_VECTOR, IPL3SOFT) iController(void) {
 
         // track target set by pcon
         default: {
-            icon_set( get_PI(i));
+            icon_set(pid_get(&current_pi, i));
             break;
         }
     }
@@ -135,28 +123,19 @@ void icon_init() {
 }
 
 // set curret target
-void icon_set_targ(int i) {
-
-    __builtin_disable_interrupts();
-    t = i;
-    __builtin_enable_interrupts();
-
+void icon_set_targ(int t) {
+    pid_set_targ(current_pi, i);
 }
 
 // set PI gains
 void icon_set_gains(float Kp, float Ki) {
-
-    __builtin_disable_interrupts();
-    icon_gains.Kp = Kp;
-    icon_gains.Ki = Ki;
-    eint = 0;
-    eintmax = TPWM / Ki;
-    __builtin_enable_interrupts();
+    pid_set_coeffs(Kp, Ki, 0);
 }
 
 // return PI gains
-iPI * icon_get_gains() {
-    return &icon_gains;
+float * icon_get_gains() {
+    float gains[2] = {current_pi.Kp, current_pi.Ki};
+    return gains;
 }
 
 //set motor output
