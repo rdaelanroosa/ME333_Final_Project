@@ -80,7 +80,7 @@ void __ISR(_TIMER_2_VECTOR, IPL3SOFT) iController(void) {
 
 void icon_init() {
 
-    icon_set_gains(KPBASE, KIBASE);
+    icon_set_gains(IKPBASE, IKIBASE);
 
     // init waveform
     int i;
@@ -124,17 +124,17 @@ void icon_init() {
 
 // set curret target
 void icon_set_targ(int t) {
-    pid_set_targ(current_pi, i);
+    pid_set_targ(&current_pi, t);
 }
 
 // set PI gains
 void icon_set_gains(float Kp, float Ki) {
-    pid_set_coeffs(Kp, Ki, 0);
+    pid_set_coeffs(&current_pi, Kp, Ki, 0);
 }
 
 // return PI gains
-float * icon_get_gains() {
-    float gains[2] = {current_pi.Kp, current_pi.Ki};
+Gains icon_get_gains() {
+    Gains gains = pid_get_gains(&current_pi);
     return gains;
 }
 

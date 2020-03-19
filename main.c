@@ -11,7 +11,7 @@ int main() {
 
     char buffer[BUF_SIZE];
     float Kp, Ki, Kd, newtarg;
-    float * gains;
+    Gains gains;
 
     //Startup, set status lights to indicate reboot (for debugging segfaults and other runtime errors)
     NU32_Startup();
@@ -92,7 +92,7 @@ int main() {
             // read current gains
             case 'h': {
                 gains = icon_get_gains();
-                sprintf(buffer, "%f %f\n", igainsp->Kp, igainsp->Ki);
+                sprintf(buffer, "%f %f\n", gains.Kp, gains.Ki);
                 NU32_WriteUART3(buffer);
                 break;
             }
@@ -101,16 +101,14 @@ int main() {
             case 'i': {
                 NU32_ReadUART3(buffer, BUF_SIZE);
                 sscanf(buffer, "%f %f %f\n", &Kp, &Ki, &Kd);
-                pcon_set_gains(Kp, Ki, Kd);
-                pgainsp = pcon_get_gains();
-                sprintf(buffer, "%f %f\n", igainsp->Kp, igainsp->Ki);
+                pcon_set_pos_gains(Kp, Ki, Kd);
 
             }
 
             // read position gains
             case 'j': {
-                pgainsp = pcon_get_gains();
-                sprintf(buffer, "%f %f %f\n", pgainsp->Kp, pgainsp->Ki, pgainsp->Kd);
+                gains = pcon_get_pos_gains();
+                sprintf(buffer, "%f %f %f\n", gains.Kp, gains.Ki, gains.Kd);
                 NU32_WriteUART3(buffer);
                 break;
             }
@@ -136,7 +134,7 @@ int main() {
             case 'l': {
                 NU32_ReadUART3(buffer, BUF_SIZE);
                 sscanf(buffer, "%f\n", &newtarg);
-                pcon_set_targ(cnvtt_pos_ticks(newtarg));
+                pcon_set_pos_targ(cnvtt_pos_ticks(newtarg));
                 util_mode_set(HOLD);
                 break;
             }
@@ -170,8 +168,6 @@ int main() {
             //execute trajectory
             case 'o': {
                 encoder_reset();
-
-
                 util_mode_set(TRACK);
                 while (util_mode_get() == TRACK) {;}
                 util_return_data(pcon_get_results());

@@ -31,7 +31,7 @@ static PIDObj vel_pi = {
     ICENTER,
     IMAX,
     IMIN,
-    VKDBASE,
+    VKPBASE,
     VKIBASE,
     0
 };
@@ -46,9 +46,9 @@ volatile DataPoint pTestData[MAXTRAJ];
 void __ISR(_TIMER_4_VECTOR, IPL3SOFT) pController(void) {
     
     static int ntest = 0;
-    static int pprev = 0;
+    static int posprev = 0;
     pos = encoder_get();
-    vel = pos - pprev;
+    vel = pos - posprev;
     int u;
 
     switch (util_mode_get()) {
@@ -56,20 +56,20 @@ void __ISR(_TIMER_4_VECTOR, IPL3SOFT) pController(void) {
         case HOLD: {
             
             // in hold mode pass PID output to current PI control
-            icon_set_targ(get_PID(p));
+            icon_set_targ(pid_get(&pos_pid, pos));
 
             break;
         }
 
         case TRACK: {
             // Track trajectory with PID
-            pcon_set_targ(trajectory[ntest]);
-            u = get_PID(p);
+            pcon_set_pos_targ(trajectory[ntest]);
+            u = pid_get(&pos_pid, pos);
             icon_set_targ(u);
 
             //record data
-            pTestData[ntest].target = cnvtt_encoder_deg(trajectory[ntest]);
-            pTestData[ntest].value = cnvtt_encoder_deg(p);
+            pTestData[ntest].target = cnvtt_pos_deg(trajectory[ntest]);
+            pTestData[ntest].value = cnvtt_pos_deg(pos);
             pTestData[ntest].effort = cnvtt_isense_ma(u);
 
             //reset and go to IDLE at the end of the trajectory
@@ -97,7 +97,7 @@ void __ISR(_TIMER_4_VECTOR, IPL3SOFT) pController(void) {
     }
 
     // Clear interrupt flag
-    pprev = p;
+    posprev = pos;
     IFS0bits.T4IF = 0;
 }
 
@@ -122,14 +122,14 @@ void pcon_set_pos_gains(float Kp, float Ki, float Kd) {
 }
 
 //return pointer to PID gains
-float * pcon_get_pos_gains() {
-    float gains[3] = {pos_pid.Kp, pos_pid.Ki, pos_pid.Kd};
+Gains pcon_get_pos_gains() {
+    Gains gains = pid_get_gains(&pos_pid);
     return gains;
 }
 
 // set target for PID
 void pcon_set_pos_targ(int pos) {
-  pid_set_targ(&pos_pid, pos)
+  pid_set_targ(&pos_pid, pos);
 }
 
 void pcon_set_vel_gains(float Kp, float Ki) {
@@ -137,14 +137,14 @@ void pcon_set_vel_gains(float Kp, float Ki) {
 }
 
 //return array of PID gains
-float * pcon_get_vel_gains() {
-    float gains[3] = {vel_pi.Kp, vel_pi.Ki, vel_pi.Kd};
+Gains pcon_get_vel_gains() {
+    Gains gains = pid_get_gains(&vel_pi);
     return gains;
 }
 
 // set target for PID
 void pcon_set_vel_targ(int vel) {
-  pid_set_targ(&vel_pi, vel)
+  pid_set_targ(&vel_pi, vel);
 }
 
 //return trajectory array

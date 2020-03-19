@@ -1,7 +1,5 @@
 #include "util.h"
 
-int pid_get(i)
-
 static Mode PICMode = IDLE;
 // return operating mode
 Mode util_mode_get() {

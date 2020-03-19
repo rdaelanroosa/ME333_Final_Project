@@ -11,10 +11,10 @@
 #define PKPBASE 5
 #define PKIBASE 0
 #define PKDBASE 50
-#define VMAX 
-#define VMIN
-#define VKPBASE
-#define VKIBASE
+#define VMAX 10000
+#define VMIN 10000
+#define VKPBASE 1
+#define VKIBASE 1
 
 // Macros from icon.c
 #define TPWM 3999.0         //PWM period
@@ -23,7 +23,6 @@
 #define ITESTL -200.0
 #define IKPBASE 19
 #define IKIBASE 5
-#define TICKSTOMA 6.77  
 
 // Macros from encoder.c
 
@@ -47,19 +46,19 @@
 #define TICKSTODEG 0.9375
 #define DEGTOTICKS 1.0667
 
-#define TICKSTOPWM 39.99
-#define PWMTOTICKS 0.025006
+#define TICKSTOPWM 0.025006 
+#define PWMTOTICKS 39.99
 
 #define TICKSTORPM 31.25
 #define RPMTOTICKS 0.032
 
 typedef enum Mode{
     IDLE, 
-    PWM,
-    SPEED, 
+    PWM, 
     ITEST, 
     HOLD, 
-    TRACK
+    TRACK,
+    SPEED
 } Mode;
 
 typedef struct {

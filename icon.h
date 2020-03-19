@@ -2,12 +2,7 @@
 #define ICON_H
 
 #include "util.h"
-
-// PI gains struct
-typedef struct {
-    float Kp; 
-    float Ki; 
-} iPI;
+#include "pid.h"
 
 void icon_init();
 
@@ -15,7 +10,7 @@ void icon_set_targ(int i);
 
 void icon_set_gains(float Kp, float Ki);
 
-iPI * icon_get_gains();
+Gains icon_get_gains();
 
 void icon_set_pwm(float power);
 
