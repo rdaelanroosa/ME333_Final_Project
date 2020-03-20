@@ -4,6 +4,7 @@
 #include "icon.h"
 #include "pcon.h"
 #include "util.h"
+#include "enc.h"
 
 #define BUF_SIZE 200
 
@@ -23,6 +24,7 @@ int main() {
     //Init modules
     util_mode_set(IDLE);
     encoder_init();
+    enc_init();
     isense_init();
     icon_init();
     pcon_init();
@@ -52,14 +54,14 @@ int main() {
 
             // read position in ticks
             case 'c': {
-                sprintf(buffer, "%d\n", encoder_get());
+                sprintf(buffer, "%d\n", enc_pos_get());
                 NU32_WriteUART3(buffer);
                 break;
             }
             
             //read position in degrees
             case 'd': {
-                sprintf(buffer, "%f\n", cnvtt_pos_deg(encoder_get())); 
+                sprintf(buffer, "%d\n", encoder_get()-PCENTER); 
                 NU32_WriteUART3(buffer);
                 break;
             }
@@ -67,6 +69,7 @@ int main() {
             //reset encoder
             case 'e': {
                 encoder_reset();
+                enc_reset();
                 break;
             }
             
